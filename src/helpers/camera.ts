@@ -1,4 +1,3 @@
-import { useEffect, useRef, type RefObject } from "react";
 import { OrthographicCamera, PerspectiveCamera } from "three";
 
 export type CameraProjection = "perspective" | "orthographic";
@@ -26,10 +25,6 @@ export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
   positionZ: 5,
   orthoViewHeight: 5,
 };
-
-export interface UseCameraOptions extends CameraSettingsInput {
-  projection?: CameraProjection;
-}
 
 export function resolveCameraSettings(
   input: CameraSettingsInput = {}
@@ -120,75 +115,4 @@ export function updateCameraProjection(
   }
 
   camera.updateProjectionMatrix();
-}
-
-export function applyCameraSettings(
-  camera: PerspectiveCamera | OrthographicCamera,
-  container: HTMLDivElement,
-  settings: CameraSettings
-): void {
-  camera.near = settings.near;
-  camera.far = settings.far;
-  camera.position.z = settings.positionZ;
-
-  if (camera instanceof PerspectiveCamera) {
-    camera.fov = settings.fov;
-    camera.aspect = getContainerAspect(container);
-    camera.updateProjectionMatrix();
-    return;
-  }
-
-  setOrthographicFrustum(
-    camera,
-    getContainerAspect(container),
-    settings.orthoViewHeight
-  );
-  camera.updateProjectionMatrix();
-}
-
-function isSameProjection(
-  camera: PerspectiveCamera | OrthographicCamera,
-  projection: CameraProjection
-): boolean {
-  return (
-    (projection === "perspective" && camera instanceof PerspectiveCamera) ||
-    (projection === "orthographic" && camera instanceof OrthographicCamera)
-  );
-}
-
-export function useCamera(
-  containerRef: RefObject<HTMLDivElement>,
-  options: UseCameraOptions = {}
-): RefObject<PerspectiveCamera | OrthographicCamera | null> {
-  const { projection = "perspective", ...settingsInput } = options;
-  const settings = resolveCameraSettings(settingsInput);
-  const cameraRef = useRef<PerspectiveCamera | OrthographicCamera | null>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const current = cameraRef.current;
-    if (current && isSameProjection(current, projection)) {
-      applyCameraSettings(current, container, settings);
-      return;
-    }
-
-    const camera = createCamera(container, projection, settings);
-    cameraRef.current = camera;
-
-    return () => {
-      cameraRef.current = null;
-    };
-  }, [
-    containerRef,
-    projection,
-    settings.fov,
-    settings.near,
-    settings.far,
-    settings.positionZ,
-    settings.orthoViewHeight,
-  ]);
-
-  return cameraRef;
 }
