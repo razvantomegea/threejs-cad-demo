@@ -1,14 +1,35 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { Scene, WebGLRenderer, Color, REVISION } from "three";
-import { useCamera, updateCameraProjection } from "./useCamera";
+import {
+  useCamera,
+  updateCameraProjection,
+  resolveCameraSettings,
+  type CameraSettings,
+  type CameraSettingsInput,
+  type CameraProjection,
+} from "./useCamera";
 
-export function useThreeScene(containerRef: RefObject<HTMLDivElement>): void {
-  const cameraRef = useCamera(containerRef);
+export interface UseThreeSceneOptions extends CameraSettingsInput {
+  cameraProjection?: CameraProjection;
+}
+
+export function useThreeScene(
+  containerRef: RefObject<HTMLDivElement>,
+  options: UseThreeSceneOptions = {}
+): void {
+  const { cameraProjection, ...cameraSettingsInput } = options;
+  const cameraSettings = resolveCameraSettings(cameraSettingsInput);
+  const cameraSettingsRef = useRef<CameraSettings>(cameraSettings);
+  cameraSettingsRef.current = cameraSettings;
+
+  const cameraRef = useCamera(containerRef, {
+    projection: cameraProjection,
+    ...cameraSettingsInput,
+  });
 
   useEffect(() => {
     const container = containerRef.current;
-    const camera = cameraRef.current;
-    if (!container || !camera) return;
+    if (!container) return;
 
     const scene = new Scene();
     scene.background = new Color(0x101014);
@@ -23,14 +44,20 @@ export function useThreeScene(containerRef: RefObject<HTMLDivElement>): void {
     let frameId = 0;
 
     const render = (): void => {
-      renderer.render(scene, camera);
+      const camera = cameraRef.current;
+      if (camera) {
+        renderer.render(scene, camera);
+      }
       frameId = requestAnimationFrame(render);
     };
 
     render();
 
     const handleResize = (): void => {
-      updateCameraProjection(camera, container);
+      const camera = cameraRef.current;
+      if (!camera) return;
+
+      updateCameraProjection(camera, container, cameraSettingsRef.current);
       const h = Math.max(container.clientHeight, 1);
       renderer.setSize(container.clientWidth, h);
     };
