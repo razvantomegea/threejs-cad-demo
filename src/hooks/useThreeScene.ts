@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { Scene, WebGLRenderer, Color, REVISION } from "three";
 import {
   createCamera,
@@ -8,10 +8,23 @@ import {
   type CameraSettings,
   type CameraSettingsInput,
 } from "../helpers/camera";
+import { SceneManager, type SceneObjectId } from "../helpers/SceneManager";
 import { createSceneControls } from "../helpers/sceneControls";
 import type { SceneControlsHandle } from "../types/sceneControls";
+import type {
+  SceneEditorSnapshot,
+  SceneObjectConfig,
+  SceneObjectUpdate,
+  TransformMode,
+} from "../types/sceneObjects";
 
 const DEFAULT_BACKGROUND_COLOR = 0x101014;
+
+const EMPTY_EDITOR_SNAPSHOT: SceneEditorSnapshot = {
+  objects: [],
+  selectedId: null,
+  transformMode: "translate",
+};
 
 export interface UseThreeSceneOptions extends CameraSettingsInput {
   cameraProjection?: CameraProjection;
@@ -23,6 +36,12 @@ export interface UseThreeSceneOptions extends CameraSettingsInput {
 
 export interface UseThreeSceneResult {
   setControlsEnabled: (enabled: boolean) => void;
+  editorSnapshot: SceneEditorSnapshot;
+  addObject: (config: SceneObjectConfig) => SceneObjectId;
+  updateObject: (id: SceneObjectId, update: SceneObjectUpdate) => void;
+  removeObject: (id: SceneObjectId) => void;
+  selectObject: (id: SceneObjectId | null) => void;
+  setTransformMode: (mode: TransformMode) => void;
 }
 
 export function useThreeScene(
@@ -53,9 +72,39 @@ export function useThreeScene(
   }
 
   const controlsHandleRef = useRef<SceneControlsHandle | null>(null);
+  const managerRef = useRef<SceneManager | null>(null);
+  const [editorSnapshot, setEditorSnapshot] =
+    useState<SceneEditorSnapshot>(EMPTY_EDITOR_SNAPSHOT);
 
   const setControlsEnabled = useCallback((enabled: boolean): void => {
     controlsHandleRef.current?.setEnabled(enabled);
+  }, []);
+
+  const addObject = useCallback((config: SceneObjectConfig): SceneObjectId => {
+    const manager = managerRef.current;
+    if (manager === null) {
+      throw new Error("SceneManager is not initialized");
+    }
+    return manager.addObject(config);
+  }, []);
+
+  const updateObject = useCallback(
+    (id: SceneObjectId, update: SceneObjectUpdate): void => {
+      managerRef.current?.updateObject(id, update);
+    },
+    [],
+  );
+
+  const removeObject = useCallback((id: SceneObjectId): void => {
+    managerRef.current?.removeObject(id);
+  }, []);
+
+  const selectObject = useCallback((id: SceneObjectId | null): void => {
+    managerRef.current?.selectObject(id);
+  }, []);
+
+  const setTransformMode = useCallback((mode: TransformMode): void => {
+    managerRef.current?.setTransformMode(mode);
   }, []);
 
   useEffect(() => {
@@ -78,6 +127,15 @@ export function useThreeScene(
       enabled: controlsEnabled,
     });
     controlsHandleRef.current = controls;
+
+    const manager = new SceneManager({
+      scene,
+      camera,
+      domElement: renderer.domElement,
+      sceneControls: controls,
+    });
+    managerRef.current = manager;
+    const unsubscribe = manager.subscribe(setEditorSnapshot);
 
     console.log("[boot] three.js works", { revision: REVISION });
 
@@ -103,6 +161,10 @@ export function useThreeScene(
     return () => {
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
+      unsubscribe();
+      manager.dispose();
+      managerRef.current = null;
+      setEditorSnapshot(EMPTY_EDITOR_SNAPSHOT);
       controls.dispose();
       controlsHandleRef.current = null;
       renderer.dispose();
@@ -110,5 +172,13 @@ export function useThreeScene(
     };
   }, [containerRef]);
 
-  return { setControlsEnabled };
+  return {
+    setControlsEnabled,
+    editorSnapshot,
+    addObject,
+    updateObject,
+    removeObject,
+    selectObject,
+    setTransformMode,
+  };
 }

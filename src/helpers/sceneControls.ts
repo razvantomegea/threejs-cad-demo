@@ -1,10 +1,9 @@
 import type { Camera } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import type { SceneControlsHandle } from "../types/sceneControls";
-
-export interface CreateSceneControlsOptions {
-  enabled?: boolean;
-}
+import type {
+  CreateSceneControlsOptions,
+  SceneControlsHandle,
+} from "../types/sceneControls";
 
 export function createSceneControls(
   camera: Camera,
@@ -13,9 +12,6 @@ export function createSceneControls(
 ): SceneControlsHandle {
   const { enabled = true } = options;
   const controls = new OrbitControls(camera, domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.screenSpacePanning = true;
   controls.enabled = enabled;
 
   return {
