@@ -27,7 +27,7 @@ export const DEFAULT_CAMERA_SETTINGS: CameraSettings = {
 };
 
 export function resolveCameraSettings(
-  input: CameraSettingsInput = {}
+  input: CameraSettingsInput = {},
 ): CameraSettings {
   return {
     fov: input.fov ?? DEFAULT_CAMERA_SETTINGS.fov,
@@ -46,7 +46,7 @@ export function getContainerAspect(container: HTMLDivElement): number {
 function setOrthographicFrustum(
   camera: OrthographicCamera,
   aspect: number,
-  viewHeight: number
+  viewHeight: number,
 ): void {
   const halfH = viewHeight / 2;
   const halfW = halfH * aspect;
@@ -58,13 +58,13 @@ function setOrthographicFrustum(
 
 export function createPerspectiveCamera(
   container: HTMLDivElement,
-  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS
+  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS,
 ): PerspectiveCamera {
   const camera = new PerspectiveCamera(
     settings.fov,
     getContainerAspect(container),
     settings.near,
-    settings.far
+    settings.far,
   );
   camera.position.z = settings.positionZ;
   return camera;
@@ -72,7 +72,7 @@ export function createPerspectiveCamera(
 
 export function createOrthographicCamera(
   container: HTMLDivElement,
-  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS
+  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS,
 ): OrthographicCamera {
   const camera = new OrthographicCamera(
     0,
@@ -80,12 +80,12 @@ export function createOrthographicCamera(
     0,
     0,
     settings.near,
-    settings.far
+    settings.far,
   );
   setOrthographicFrustum(
     camera,
     getContainerAspect(container),
-    settings.orthoViewHeight
+    settings.orthoViewHeight,
   );
   camera.position.z = settings.positionZ;
   return camera;
@@ -94,7 +94,7 @@ export function createOrthographicCamera(
 export function createCamera(
   container: HTMLDivElement,
   projection: CameraProjection = "perspective",
-  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS
+  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS,
 ): PerspectiveCamera | OrthographicCamera {
   return projection === "orthographic"
     ? createOrthographicCamera(container, settings)
@@ -104,7 +104,7 @@ export function createCamera(
 export function updateCameraProjection(
   camera: PerspectiveCamera | OrthographicCamera,
   container: HTMLDivElement,
-  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS
+  settings: CameraSettings = DEFAULT_CAMERA_SETTINGS,
 ): void {
   const aspect = getContainerAspect(container);
 

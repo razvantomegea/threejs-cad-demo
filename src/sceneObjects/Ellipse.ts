@@ -15,7 +15,12 @@ export default class Ellipse extends Ellipsoid {
   private radiusX: number;
   private radiusY: number;
 
-  constructor({ label, color, transform, size }: SceneObjectOptions<EllipseSize>) {
+  constructor({
+    label,
+    color,
+    transform,
+    size,
+  }: SceneObjectOptions<EllipseSize>) {
     const radiusX = size?.radiusX ?? DEFAULT_RADIUS_X;
     const radiusY = size?.radiusY ?? DEFAULT_RADIUS_Y;
     super({
@@ -29,9 +34,11 @@ export default class Ellipse extends Ellipsoid {
   }
 
   applySizeUpdate(size: SceneObjectSizeUpdate): void {
+    // Manager validates size type matches object kind before calling
     const update = size as Partial<EllipseSize>;
     const radiusX = update.radiusX;
     const radiusY = update.radiusY;
+    
     if (radiusX === undefined && radiusY === undefined) {
       return;
     }

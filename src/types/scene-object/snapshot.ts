@@ -20,37 +20,37 @@ interface SceneObjectSnapshotBase {
 
 export type SceneObjectSnapshot =
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Cube;
-    readonly size: CubeSize;
-  })
+      readonly kind: SceneObjectKind.Cube;
+      readonly size: CubeSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Rectangle;
-    readonly size: RectangleSize;
-  })
+      readonly kind: SceneObjectKind.Rectangle;
+      readonly size: RectangleSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Line;
-    readonly size: LineSize;
-  })
+      readonly kind: SceneObjectKind.Line;
+      readonly size: LineSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Sphere;
-    readonly size: SphereSize;
-  })
+      readonly kind: SceneObjectKind.Sphere;
+      readonly size: SphereSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Circle;
-    readonly size: CircleSize;
-  })
+      readonly kind: SceneObjectKind.Circle;
+      readonly size: CircleSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Ellipse;
-    readonly size: EllipseSize;
-  })
+      readonly kind: SceneObjectKind.Ellipse;
+      readonly size: EllipseSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Point;
-    readonly size: PointSize;
-  })
+      readonly kind: SceneObjectKind.Point;
+      readonly size: PointSize;
+    })
   | (SceneObjectSnapshotBase & {
-    readonly kind: SceneObjectKind.Polygon;
-    readonly size: PolygonSize;
-  });
+      readonly kind: SceneObjectKind.Polygon;
+      readonly size: PolygonSize;
+    });
 
 /** Manager + React subscription payload. */
 export interface SceneEditorSnapshot {

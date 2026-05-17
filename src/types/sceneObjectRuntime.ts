@@ -7,7 +7,9 @@ export interface SceneObjectInit {
   readonly label: string;
 }
 
-export interface SceneObjectOptions<T extends SceneObjectSize> extends SceneObjectInit {
+export interface SceneObjectOptions<
+  T extends SceneObjectSize,
+> extends SceneObjectInit {
   readonly color?: number;
   readonly transform?: Partial<SceneObjectTransform>;
   readonly size?: Partial<T>;

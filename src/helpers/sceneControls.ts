@@ -9,7 +9,7 @@ export interface CreateSceneControlsOptions {
 export function createSceneControls(
   camera: Camera,
   domElement: HTMLElement,
-  options: CreateSceneControlsOptions = {}
+  options: CreateSceneControlsOptions = {},
 ): SceneControlsHandle {
   const { enabled = true } = options;
   const controls = new OrbitControls(camera, domElement);

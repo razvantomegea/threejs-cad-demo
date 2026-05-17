@@ -1,9 +1,4 @@
-import {
-  Color,
-  Mesh,
-  Object3D,
-  type Material,
-} from "three";
+import { Color, Mesh, Object3D, type Material } from "three";
 import {
   SceneObjectKind,
   type EulerState,
@@ -20,7 +15,10 @@ import {
 } from "../types/sceneObjectRuntime.ts";
 
 export { SCENE_OBJECT_ID_USER_DATA_KEY } from "../types/sceneObjectRuntime.ts";
-export type { SceneObjectInit, SceneObjectUserData } from "../types/sceneObjectRuntime.ts";
+export type {
+  SceneObjectInit,
+  SceneObjectUserData,
+} from "../types/sceneObjectRuntime.ts";
 export { SceneObjectKind };
 
 export default abstract class SceneObject extends Object3D {
@@ -68,19 +66,11 @@ export default abstract class SceneObject extends Object3D {
 
   applyTransform(input: Partial<SceneObjectTransform>): void {
     if (input.position !== undefined) {
-      this.position.set(
-        input.position.x,
-        input.position.y,
-        input.position.z
-      );
+      this.position.set(input.position.x, input.position.y, input.position.z);
     }
 
     if (input.rotation !== undefined) {
-      this.rotation.set(
-        input.rotation.x,
-        input.rotation.y,
-        input.rotation.z
-      );
+      this.rotation.set(input.rotation.x, input.rotation.y, input.rotation.z);
     }
 
     if (input.scale !== undefined) {
@@ -164,9 +154,7 @@ export default abstract class SceneObject extends Object3D {
     return { x: rotation.x, y: rotation.y, z: rotation.z };
   }
 
-  protected traverseColorMaterial(
-    callback: (color: Color) => void
-  ): void {
+  protected traverseColorMaterial(callback: (color: Color) => void): void {
     this.traverse((child) => {
       if (!(child instanceof Mesh)) {
         return;
@@ -184,7 +172,7 @@ export default abstract class SceneObject extends Object3D {
   }
 
   private iscolorMaterial(
-    material: Material
+    material: Material,
   ): material is Material & { color: Color } {
     return "color" in material && material.color instanceof Color;
   }

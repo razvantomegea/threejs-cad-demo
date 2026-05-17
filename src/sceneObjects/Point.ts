@@ -31,12 +31,17 @@ export default class Point extends Ellipsoid {
   }
 
   applySizeUpdate(size: SceneObjectSizeUpdate): void {
-    const update = size as Partial<PointSize>;
-    if (update.radius === undefined) {
+    if (
+      typeof size !== "object" ||
+      size == null ||
+      !("radius" in size) ||
+      typeof size.radius !== "number" ||
+      size.radius <= 0
+    ) {
       return;
     }
 
-    this.radius = update.radius;
+    this.radius = size.radius;
     this.replaceGeometry({
       radiusX: this.radius,
       radiusY: this.radius,

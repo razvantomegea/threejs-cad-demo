@@ -13,7 +13,12 @@ export default class Sphere extends Ellipsoid {
   readonly kind = SceneObjectKind.Sphere;
   private radius: number;
 
-  constructor({ label, color, transform, size }: SceneObjectOptions<SphereSize>) {
+  constructor({
+    label,
+    color,
+    transform,
+    size,
+  }: SceneObjectOptions<SphereSize>) {
     const radius = size?.radius ?? DEFAULT_RADIUS;
     super({
       label,

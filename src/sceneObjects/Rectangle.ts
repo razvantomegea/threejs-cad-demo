@@ -16,7 +16,12 @@ export default class Rectangle extends Cuboid {
   private width: number;
   private height: number;
 
-  constructor({ label, color, transform, size }: SceneObjectOptions<RectangleSize>) {
+  constructor({
+    label,
+    color,
+    transform,
+    size,
+  }: SceneObjectOptions<RectangleSize>) {
     const width = size?.width ?? DEFAULT_WIDTH;
     const height = size?.height ?? DEFAULT_HEIGHT;
     super({ label, color, transform, size: { width, height, depth: DEPTH } });

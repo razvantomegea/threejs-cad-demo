@@ -27,7 +27,7 @@ export interface UseThreeSceneResult {
 
 export function useThreeScene(
   containerRef: RefObject<HTMLDivElement>,
-  options: UseThreeSceneOptions = {}
+  options: UseThreeSceneOptions = {},
 ): UseThreeSceneResult {
   const {
     cameraProjection = "perspective",

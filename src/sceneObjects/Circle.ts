@@ -13,7 +13,12 @@ export default class Circle extends Ellipsoid {
   readonly kind = SceneObjectKind.Circle;
   private radius: number;
 
-  constructor({ label, color, transform, size }: SceneObjectOptions<CircleSize>) {
+  constructor({
+    label,
+    color,
+    transform,
+    size,
+  }: SceneObjectOptions<CircleSize>) {
     const radius = size?.radius ?? DEFAULT_RADIUS;
     super({
       label,

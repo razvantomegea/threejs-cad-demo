@@ -29,12 +29,17 @@ const SEGMENT_AXIS = new Vector3(1, 0, 0);
 export default class Polygon extends SceneObject {
   readonly kind = SceneObjectKind.Polygon;
   private points: Vector3State[];
-  private segmentColor: number;
+  private segmentColor: number = DEFAULT_COLOR;
 
-  constructor({ label, color, transform, size }: SceneObjectOptions<PolygonSize>) {
+  constructor({
+    label,
+    color,
+    transform,
+    size,
+  }: SceneObjectOptions<PolygonSize>) {
     super({ label });
-    this.segmentColor = color ?? DEFAULT_COLOR;
     this.points = [...(size?.points ?? DEFAULT_POINTS)];
+    this.setColor(color ?? DEFAULT_COLOR);
     this.rebuildSegments();
 
     if (transform !== undefined) {
@@ -102,7 +107,7 @@ export default class Polygon extends SceneObject {
   private createSegmentMesh(
     start: Vector3State,
     end: Vector3State,
-    color: number
+    color: number,
   ): Mesh {
     const startVector = new Vector3(start.x, start.y, start.z);
     const endVector = new Vector3(end.x, end.y, end.z);
@@ -114,13 +119,9 @@ export default class Polygon extends SceneObject {
         ? new BoxGeometry(
             SEGMENT_THICKNESS,
             SEGMENT_THICKNESS,
-            SEGMENT_THICKNESS
-          )
-        : new BoxGeometry(
-            length,
             SEGMENT_THICKNESS,
-            SEGMENT_THICKNESS
-          );
+          )
+        : new BoxGeometry(length, SEGMENT_THICKNESS, SEGMENT_THICKNESS);
 
     const mesh = new Mesh(geometry, new MeshBasicMaterial({ color }));
     mesh.position.copy(startVector).add(endVector).multiplyScalar(0.5);
@@ -128,7 +129,7 @@ export default class Polygon extends SceneObject {
     if (length >= 1e-6) {
       const quaternion = new Quaternion().setFromUnitVectors(
         SEGMENT_AXIS,
-        direction.normalize()
+        direction.normalize(),
       );
       mesh.setRotationFromQuaternion(quaternion);
     }

@@ -25,6 +25,7 @@ isProject: false
 **Status:** In review. Development starts only after approval. Current GPT-5.5 role: planning only; implementation must be done by an allowed coding model per repo rules.
 
 ## Scope
+
 - Add a vanilla three.js `SceneManager` that owns app objects, selection, transform gizmos, and cleanup.
 - Add a default exported abstract `SceneObject` base class, inherited by generic shapes and specific shapes:
   - `SceneObject` -> `Cuboid` -> `Cube`, `Rectangle`, `Line`
@@ -35,12 +36,14 @@ isProject: false
 - In-memory only. No persistence/export/import in first pass.
 
 ## Existing Code To Reuse
+
 - `src/hooks/useThreeScene.ts` already owns `THREE.Scene`, renderer, camera, RAF, resize, cleanup.
 - `src/helpers/sceneControls.ts` already wraps `OrbitControls`; extend its handle so `TransformControls` can disable orbit while dragging.
 - `src/helpers/camera.ts` already centralizes perspective/orthographic camera creation and resize projection.
 - `src/components/Scene.tsx` already has the overlay controls panel and can host the object configurator.
 
 ## Architecture Decisions
+
 - `SceneObject` extends `THREE.Object3D` directly. It does not wrap a separate `object3D` property.
 - Three's `position`, `rotation`, and `scale` remain the single source of truth. React snapshots read from those values instead of duplicating transform state.
 - `SceneObjectKind` is a string enum in `src/types/scene-object/core.ts`. Config, snapshots, and subclasses use enum members (e.g. `SceneObjectKind.Cube`).
@@ -52,6 +55,7 @@ isProject: false
 - Editor contracts (ids, configs, updates, snapshots) stay in `src/types/scene-object/` and are re-exported from `src/types/sceneObjects.ts`. Runtime init/userData types live in `src/types/sceneObjectRuntime.ts`.
 
 ## File Plan
+
 - `src/types/scene-object/` (barrel: `src/types/sceneObjects.ts`)
   - `core.ts`: `SceneObjectId`, `SceneObjectKind` enum, `TransformMode`
   - `geometry.ts`: `Vector3State`, `EulerState`, `SceneObjectTransform`, `SceneObjectTransformInput`
@@ -90,6 +94,7 @@ isProject: false
   - Expand the existing fixed panel styles for list/form layout without adding a CSS framework.
 
 ## Shape Behavior
+
 - `Cuboid`: mesh-based base with `createGeometry(size)` returning `BoxGeometry(width, height, depth)`.
 - `Cube`: Cuboid with equal dimensions; UI exposes one `size` value.
 - `Rectangle`: Cuboid with `depth` fixed to a small thickness, rendered in XY plane.
@@ -102,6 +107,7 @@ isProject: false
 - `Polygon`: group of connected `Line`-style segments from points. First version exposes predefined point count/vertices through config defaults, then transform/color/scale as a whole.
 
 ## Interaction Flow
+
 ```mermaid
 flowchart TD
   SceneComponent["Scene component"] --> useThreeScene["useThreeScene"]
@@ -117,6 +123,7 @@ flowchart TD
 ```
 
 ## Implementation Order
+
 1. Define strict types in `src/types/scene-object/` and barrel `src/types/sceneObjects.ts`.
 2. Implement `SceneObject` base class with protected Three helpers, static raycast lookup, and `dispose()`.
 3. Add shape subclasses, `createSceneObject` factory, and verify instances render in the scene.
@@ -128,6 +135,7 @@ flowchart TD
 9. Verify with `pnpm build` and manual browser checks.
 
 ## Validation
+
 - Run `pnpm build` for strict TypeScript and Vite build.
 - Manual checks:
   - Add every shape type.
@@ -139,6 +147,7 @@ flowchart TD
   - Add/remove repeatedly and check no obvious console errors.
 
 ## Risks / Constraints
+
 - No automated test runner exists in the repo. First pass should not add test dependencies unless approved.
 - `Polygon` endpoint editing is a likely follow-up; first pass manages it as a whole object.
 - TransformControls can conflict with OrbitControls unless `dragging-changed` is handled carefully.

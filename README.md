@@ -4,14 +4,14 @@ Minimal **Vite + React + TypeScript + vanilla three.js** single-page app: an emp
 
 ## Stack
 
-| Piece | Role |
-| --- | --- |
-| **Vite** + `@vitejs/plugin-react` | Dev server and production build |
-| **React 18** + **react-dom** | UI shell |
-| **TypeScript** (`strict`, `moduleResolution: "bundler"`) | Types |
-| **three** | Scene, camera, `WebGLRenderer` |
-| **@types/three** | Type packages aligned with three |
-| **pnpm** | Package manager (`pnpm-lock.yaml`; `packageManager` field for Corepack) |
+| Piece                                                    | Role                                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Vite** + `@vitejs/plugin-react`                        | Dev server and production build                                         |
+| **React 18** + **react-dom**                             | UI shell                                                                |
+| **TypeScript** (`strict`, `moduleResolution: "bundler"`) | Types                                                                   |
+| **three**                                                | Scene, camera, `WebGLRenderer`                                          |
+| **@types/three**                                         | Type packages aligned with three                                        |
+| **pnpm**                                                 | Package manager (`pnpm-lock.yaml`; `packageManager` field for Corepack) |
 
 No router, no CSS framework, no test runner—scope is intentionally tiny.
 
@@ -82,9 +82,9 @@ Under **StrictMode** in development, the three.js log may appear **twice**; that
 
 ## Out of scope (by design)
 
-- No routing, global state, or UI kit  
-- No OrbitControls, meshes, or loaders  
-- No automated tests in this starter  
+- No routing, global state, or UI kit
+- No OrbitControls, meshes, or loaders
+- No automated tests in this starter
 
 For a larger app, extend `App.tsx` and add routes or state as needed.
 
