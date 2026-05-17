@@ -8,8 +8,10 @@ import {
   type CameraSettings,
   type CameraSettingsInput,
 } from "../helpers/camera";
+import { InfiniteGridHelper } from "../helpers/InfiniteGridHelper";
 import { SceneManager, type SceneObjectId } from "../helpers/SceneManager";
 import { createSceneControls } from "../helpers/sceneControls";
+import { DEFAULT_SCENE_GRID } from "../constants/sceneGrid";
 import type { SceneControlsHandle } from "../types/sceneControls";
 import type {
   SceneEditorSnapshot,
@@ -18,7 +20,7 @@ import type {
   TransformMode,
 } from "../types/sceneObjects";
 
-const DEFAULT_BACKGROUND_COLOR = 0x101014;
+const DEFAULT_BACKGROUND_COLOR = 0xc0c0c0;
 
 const EMPTY_EDITOR_SNAPSHOT: SceneEditorSnapshot = {
   objects: [],
@@ -117,6 +119,9 @@ export function useThreeScene(
     const scene = new Scene();
     scene.background = new Color(backgroundColor);
 
+    const grid = new InfiniteGridHelper(DEFAULT_SCENE_GRID);
+    scene.add(grid);
+
     const renderer = new WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -143,6 +148,7 @@ export function useThreeScene(
 
     const render = (): void => {
       controls.update();
+      grid.update(camera);
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(render);
     };
@@ -162,6 +168,8 @@ export function useThreeScene(
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       unsubscribe();
+      grid.dispose();
+      scene.remove(grid);
       manager.dispose();
       managerRef.current = null;
       setEditorSnapshot(EMPTY_EDITOR_SNAPSHOT);
