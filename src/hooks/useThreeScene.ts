@@ -20,6 +20,7 @@ import type {
   TransformMode,
 } from "../types/sceneObjects";
 
+/** Default scene background: light silver (`0xc0c0c0` / `#c0c0c0`). */
 const DEFAULT_BACKGROUND_COLOR = 0xc0c0c0;
 
 const EMPTY_EDITOR_SNAPSHOT: SceneEditorSnapshot = {
@@ -32,7 +33,7 @@ export interface UseThreeSceneOptions extends CameraSettingsInput {
   cameraProjection?: CameraProjection;
   /** Initial enabled state; default true */
   controlsEnabled?: boolean;
-  /** Hex (e.g. `0x101014`) or CSS color (e.g. `"#101014"`). Default `0x101014`. */
+  /** Hex (e.g. `0xc0c0c0`) or CSS color (e.g. `"#c0c0c0"`). Default `0xc0c0c0`. */
   backgroundColor?: number | string;
 }
 

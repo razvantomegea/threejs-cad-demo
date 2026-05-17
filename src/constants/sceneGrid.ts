@@ -3,7 +3,7 @@ import type { InfiniteGridOptions } from "../types/sceneGrid";
 export const DEFAULT_SCENE_GRID = {
   cellSize: 1,
   sectionSize: 10,
-  planeExtent: 200,
+  planeExtent: 500,
   fadeDistance: 80,
   yOffset: -0.001,
   minorColor: 0x2a2a32,

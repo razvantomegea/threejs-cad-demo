@@ -47,11 +47,11 @@ void main() {
   float major = gridLine(coord, uSectionSize);
 
   vec3 color = uMinorColor;
-  float strength = minor * 0.35;
+  float strength = minor * 0.2;
 
   if (major > 0.01) {
     color = uMajorColor;
-    strength = max(strength, major * 0.65);
+    strength = max(strength, major * 0.1);
   }
 
   float axisX = 1.0 - smoothstep(0.0, 0.02, abs(coord.x));
@@ -66,7 +66,7 @@ void main() {
   }
 
   float dist = distance(coord, uCameraPosition.xz);
-  float fade = 1.0 - smoothstep(uFadeDistance * 0.6, uFadeDistance, dist);
+  float fade = 1.0 - smoothstep(uFadeDistance * 0.75, uFadeDistance, dist);
   float alpha = clamp(strength * fade, 0.0, 1.0);
 
   if (alpha < 0.01) {
