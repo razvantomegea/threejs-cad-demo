@@ -27,9 +27,9 @@ export default abstract class SceneObject extends Object3D {
   abstract readonly kind: SceneObjectKind;
   private _label: string;
 
-  protected constructor(init: SceneObjectInit) {
+  protected constructor({ label }: SceneObjectInit) {
     super();
-    this._label = init.label;
+    this._label = label;
     this.tagSceneObjectId();
   }
 

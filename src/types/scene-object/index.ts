@@ -1,10 +1,10 @@
-export { SceneObjectKind } from "./core.ts";
-export type { TransformMode } from "./core.ts";
+export { SceneObjectKind } from "./core";
+export type { TransformMode } from "./core";
 export type {
   Vector3State,
   EulerState,
   SceneObjectTransform,
-} from "./geometry.ts";
+} from "./geometry";
 export type {
   CubeSize,
   RectangleSize,
@@ -16,7 +16,7 @@ export type {
   PolygonSize,
   SceneObjectSize,
   SceneObjectSizeUpdate,
-} from "./sizes.ts";
-export type { SceneObjectConfig } from "./config.ts";
-export type { SceneObjectUpdate } from "./update.ts";
-export type { SceneObjectSnapshot, SceneEditorSnapshot } from "./snapshot.ts";
+} from "./sizes";
+export type { SceneObjectConfig } from "./config";
+export type { SceneObjectUpdate } from "./update";
+export type { SceneObjectSnapshot, SceneEditorSnapshot } from "./snapshot";

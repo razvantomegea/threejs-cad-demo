@@ -1,7 +1,7 @@
 import type { Vector3State } from "./geometry.ts";
 
 export interface CubeSize {
-  readonly size: number;
+  readonly edge: number;
 }
 
 export interface RectangleSize {
