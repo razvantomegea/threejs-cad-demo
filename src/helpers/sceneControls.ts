@@ -23,6 +23,13 @@ export function createSceneControls(
       controls.enabled = value;
     },
     isEnabled: () => controls.enabled,
+    suspend: () => {
+      const previous = controls.enabled;
+      controls.enabled = false;
+      return () => {
+        controls.enabled = previous;
+      };
+    },
     update: () => controls.update(),
     dispose: () => controls.dispose(),
   };
