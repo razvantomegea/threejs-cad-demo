@@ -6,7 +6,7 @@ todos:
     content: Define SceneObject types, transform model, update payloads, and manager snapshot contracts.
     status: pending
   - id: build-shape-hierarchy
-    content: Create SceneObject base class, shape subclasses, factory, and disposal helper.
+    content: Create SceneObject base class, shape subclasses, and factory.
     status: pending
   - id: implement-scene-manager
     content: Implement SceneManager add/update/remove/select/snapshot, raycasting, and transform controls.
@@ -41,32 +41,39 @@ isProject: false
 - `src/components/Scene.tsx` already has the overlay controls panel and can host the object configurator.
 
 ## Architecture Decisions
-- `SceneObject` will extend `THREE.Object3D` directly. It will not wrap a separate `object3D` property.
+- `SceneObject` extends `THREE.Object3D` directly. It does not wrap a separate `object3D` property.
 - Three's `position`, `rotation`, and `scale` remain the single source of truth. React snapshots read from those values instead of duplicating transform state.
-- `SceneObject` handles shared metadata and behavior: `id`, `label`, `kind`, `userData.sceneObjectId`, transform updates, color updates, snapshots, and disposal.
-- Color changes traverse child objects and update writable material colors. The base class will not store a constructor-level material array.
+- `SceneObjectKind` is a string enum in `src/types/scene-object/core.ts`. Config, snapshots, and subclasses use enum members (e.g. `SceneObjectKind.Cube`).
+- `SceneObject` owns all shared runtime behavior: `id`, `label`, `kind`, transform/color updates, snapshots, GPU disposal, and raycast userData tagging. Do not split this into standalone Three.js util modules.
+- Three-specific helpers live on `SceneObject` as `protected` methods (transform state conversion, material color traversal, userData tagging, geometry/material disposal). Raycast id resolution is a `static` method: `SceneObject.getSceneObjectIdFromObject3D`.
+- `dispose()` removes the object from its parent and traverses child meshes to free geometry and materials, because Three removal alone does not release GPU resources.
+- Color changes traverse child meshes and update writable material colors. The base class does not store a constructor-level material array.
 - `createGeometry()` belongs on mesh-based branches such as `Cuboid` and `Ellipsoid`, not on root `SceneObject`, because `Polygon` is a compound object with multiple child segments.
+- Editor contracts (ids, configs, updates, snapshots) stay in `src/types/scene-object/` and are re-exported from `src/types/sceneObjects.ts`. Runtime init/userData types live in `src/types/sceneObjectRuntime.ts`.
 
 ## File Plan
-- Create `src/types/sceneObjects.ts`
-  - Types: `SceneObjectId`, `SceneObjectKind`, `Vector3State`, `EulerState`, `SceneObjectTransform`, `SceneObjectConfig`, `SceneObjectUpdate`, `SceneObjectSnapshot`, `TransformMode`.
+- `src/types/scene-object/` (barrel: `src/types/sceneObjects.ts`)
+  - `core.ts`: `SceneObjectId`, `SceneObjectKind` enum, `TransformMode`
+  - `geometry.ts`: `Vector3State`, `EulerState`, `SceneObjectTransform`, `SceneObjectTransformInput`
+  - `sizes.ts`, `config.ts`, `update.ts`, `snapshot.ts`
   - Keep UI and manager strictly typed around these contracts.
-- Create `src/sceneObjects/SceneObject.ts`
+- `src/types/sceneObjectRuntime.ts`
+  - `SCENE_OBJECT_ID_USER_DATA_KEY`, `SceneObjectInit`, `SceneObjectUserData`
+- `src/sceneObjects/SceneObject.ts`
   - Default abstract class extending `THREE.Object3D`.
-  - Owns `id`, `label`, `kind`, transform/color setters, snapshot conversion, and resource disposal.
-  - Uses `this.userData.sceneObjectId` and child tagging for raycast lookup.
+  - Public API: transform/color/update/snapshot/dispose.
+  - Protected Three helpers and private material disposal; static raycast id lookup.
 - Create shape classes in `src/sceneObjects/`
   - `Cuboid.ts`, `Ellipsoid.ts`, `Cube.ts`, `Sphere.ts`, `Rectangle.ts`, `Circle.ts`, `Ellipse.ts`, `Point.ts`, `Line.ts`, `Polygon.ts`.
   - `Cuboid` and `Ellipsoid` expose protected `createGeometry()`/geometry replacement for mesh-based shapes.
-  - Specific shapes configure size constraints and delegate common transforms/color/disposal to `SceneObject`.
+  - Specific shapes configure size constraints and delegate common behavior to `SceneObject`.
 - Create `src/sceneObjects/createSceneObject.ts`
   - Factory from `SceneObjectConfig` to subclass instance.
   - Central place for default dimensions/colors and IDs.
-- Create `src/helpers/sceneResources.ts`
-  - `disposeObject3D(object: Object3D): void` removes the object from its parent and traverses geometry/material resources, because Three removal does not free GPU resources automatically.
 - Create `src/helpers/SceneManager.ts`
   - Owns `Map<SceneObjectId, SceneObject>` for O(1) updates/removes.
   - Methods: `addObject`, `updateObject`, `removeObject`, `selectObject`, `setTransformMode`, `getSnapshot`, `subscribe`, `dispose`.
+  - Raycast selection via `SceneObject.getSceneObjectIdFromObject3D`; call `object.dispose()` on remove.
   - Owns `Raycaster`, pointer handling, `TransformControls`, and emits snapshots to React on changes.
 - Update `src/helpers/sceneControls.ts` and `src/types/sceneControls.ts`
   - Expose current enabled state and safe temporary disable/restore for transform dragging.
@@ -110,9 +117,9 @@ flowchart TD
 ```
 
 ## Implementation Order
-1. Define strict types in `src/types/sceneObjects.ts`.
-2. Add disposal helper in `src/helpers/sceneResources.ts`.
-3. Refactor `SceneObject` to extend `THREE.Object3D` and remove wrapper-owned `object3D`/material-array state.
+1. Define strict types in `src/types/scene-object/` and barrel `src/types/sceneObjects.ts`.
+2. Implement `SceneObject` base class with protected Three helpers, static raycast lookup, and `dispose()`.
+3. Add shape subclasses, `createSceneObject` factory, and verify instances render in the scene.
 4. Add `SceneManager` with add/update/remove/select/snapshot only.
 5. Wire `SceneManager` into `useThreeScene` and verify initial objects render.
 6. Add raycast selection and `TransformControls` attach/detach, including orbit disable while dragging.
@@ -135,4 +142,4 @@ flowchart TD
 - No automated test runner exists in the repo. First pass should not add test dependencies unless approved.
 - `Polygon` endpoint editing is a likely follow-up; first pass manages it as a whole object.
 - TransformControls can conflict with OrbitControls unless `dragging-changed` is handled carefully.
-- Three resources must be explicitly disposed on remove and unmount.
+- Three resources must be explicitly disposed via `SceneObject.dispose()` on remove and unmount.
