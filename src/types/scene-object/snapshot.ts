@@ -1,4 +1,5 @@
 import { SceneObjectKind, type TransformMode } from "./core.ts";
+import type { DrawTool } from "../sceneDraw.ts";
 import type { SceneObjectTransform } from "./geometry.ts";
 import type {
   CircleSize,
@@ -57,4 +58,5 @@ export interface SceneEditorSnapshot {
   readonly objects: readonly SceneObjectSnapshot[];
   readonly selectedId: number | null;
   readonly transformMode: TransformMode;
+  readonly activeDrawTool: DrawTool | null;
 }

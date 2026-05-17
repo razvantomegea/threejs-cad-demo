@@ -13,3 +13,6 @@ export const DEFAULT_SCENE_GRID = {
   axisZColor: 0x3a4a8b,
   axisLength: 5,
 } as const satisfies InfiniteGridOptions;
+
+/** World Y of the horizontal grid plane used for draw raycasts. */
+export const SCENE_GRID_PLANE_Y = DEFAULT_SCENE_GRID.yOffset;

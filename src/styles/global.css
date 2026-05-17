@@ -22,6 +22,10 @@ body {
   display: block;
 }
 
+.scene-root-draw {
+  cursor: crosshair;
+}
+
 .scene-editor-panel {
   position: fixed;
   top: 1rem;

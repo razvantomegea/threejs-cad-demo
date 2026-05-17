@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useThreeScene } from "../hooks/useThreeScene";
+import type { DrawTool } from "../types/sceneDraw";
 import {
   SceneObjectKind,
   type SceneObjectConfig,
@@ -16,6 +17,11 @@ const ADD_SHAPE_OPTIONS: readonly { kind: SceneObjectKind; label: string }[] = [
   { kind: SceneObjectKind.Ellipse, label: "Ellipse" },
   { kind: SceneObjectKind.Point, label: "Point" },
   { kind: SceneObjectKind.Polygon, label: "Polygon" },
+];
+
+const DRAW_TOOL_OPTIONS: readonly { kind: DrawTool; label: string }[] = [
+  { kind: SceneObjectKind.Rectangle, label: "Draw rect" },
+  { kind: SceneObjectKind.Ellipse, label: "Draw ellipse" },
 ];
 
 const TRANSFORM_MODES: readonly { mode: TransformMode; label: string }[] = [
@@ -36,6 +42,7 @@ export default function Scene(): JSX.Element {
     removeObject,
     selectObject,
     setTransformMode,
+    setDrawTool,
   } = useThreeScene(containerRef);
 
   useEffect(() => {
@@ -65,6 +72,13 @@ export default function Scene(): JSX.Element {
     }
     removeObject(editorSnapshot.selectedId);
   }, [editorSnapshot.selectedId, removeObject]);
+
+  const handleDrawToolClick = useCallback(
+    (kind: DrawTool): void => {
+      setDrawTool(editorSnapshot.activeDrawTool === kind ? null : kind);
+    },
+    [editorSnapshot.activeDrawTool, setDrawTool],
+  );
 
   const handleSelectedUpdate = useCallback(
     (update: Parameters<typeof updateObject>[1]): void => {
@@ -116,6 +130,36 @@ export default function Scene(): JSX.Element {
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="scene-editor-section">
+          <h2 className="scene-editor-heading">Draw</h2>
+          <div
+            className="scene-editor-button-group"
+            role="group"
+            aria-label="Draw tools"
+          >
+            {DRAW_TOOL_OPTIONS.map(({ kind, label }) => (
+              <button
+                key={kind}
+                type="button"
+                className={
+                  editorSnapshot.activeDrawTool === kind
+                    ? "scene-editor-button scene-editor-button-active"
+                    : "scene-editor-button"
+                }
+                aria-pressed={editorSnapshot.activeDrawTool === kind}
+                onClick={() => handleDrawToolClick(kind)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {editorSnapshot.activeDrawTool !== null ? (
+            <p className="scene-controls-hint">
+              Click and drag on the grid to draw. Release to finish.
+            </p>
+          ) : null}
         </section>
 
         <section className="scene-editor-section">
@@ -190,7 +234,14 @@ export default function Scene(): JSX.Element {
           </p>
         )}
       </aside>
-      <div ref={containerRef} className="scene-root" />
+      <div
+        ref={containerRef}
+        className={
+          editorSnapshot.activeDrawTool !== null
+            ? "scene-root scene-root-draw"
+            : "scene-root"
+        }
+      />
     </>
   );
 }

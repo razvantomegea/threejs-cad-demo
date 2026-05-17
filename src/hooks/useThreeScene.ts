@@ -13,6 +13,7 @@ import { SceneManager, type SceneObjectId } from "../helpers/SceneManager";
 import { createSceneControls } from "../helpers/sceneControls";
 import { DEFAULT_SCENE_GRID } from "../constants/sceneGrid";
 import type { SceneControlsHandle } from "../types/sceneControls";
+import type { DrawTool } from "../types/sceneDraw";
 import type {
   SceneEditorSnapshot,
   SceneObjectConfig,
@@ -27,6 +28,7 @@ const EMPTY_EDITOR_SNAPSHOT: SceneEditorSnapshot = {
   objects: [],
   selectedId: null,
   transformMode: "translate",
+  activeDrawTool: null,
 };
 
 export interface UseThreeSceneOptions extends CameraSettingsInput {
@@ -45,6 +47,7 @@ export interface UseThreeSceneResult {
   removeObject: (id: SceneObjectId) => void;
   selectObject: (id: SceneObjectId | null) => void;
   setTransformMode: (mode: TransformMode) => void;
+  setDrawTool: (tool: DrawTool | null) => void;
 }
 
 export function useThreeScene(
@@ -108,6 +111,10 @@ export function useThreeScene(
 
   const setTransformMode = useCallback((mode: TransformMode): void => {
     managerRef.current?.setTransformMode(mode);
+  }, []);
+
+  const setDrawTool = useCallback((tool: DrawTool | null): void => {
+    managerRef.current?.setDrawTool(tool);
   }, []);
 
   useEffect(() => {
@@ -189,5 +196,6 @@ export function useThreeScene(
     removeObject,
     selectObject,
     setTransformMode,
+    setDrawTool,
   };
 }
