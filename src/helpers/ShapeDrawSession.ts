@@ -28,14 +28,27 @@ export interface BakedDrawResult {
   readonly position: Vector3State;
 }
 
-function groundSpan(anchor: Vector3, current: Vector3): {
+function groundSpan(
+  anchor: Vector3,
+  current: Vector3,
+  tool: DrawTool,
+): {
   readonly width: number;
   readonly depthOnGround: number;
   readonly centerX: number;
   readonly centerZ: number;
 } {
-  const width = Math.max(MIN_RECT_WIDTH, Math.abs(current.x - anchor.x));
-  const depthOnGround = Math.max(MIN_RECT_HEIGHT, Math.abs(current.z - anchor.z));
+  const spanX = Math.abs(current.x - anchor.x);
+  const spanZ = Math.abs(current.z - anchor.z);
+
+  const width =
+    tool === SceneObjectKind.Ellipse
+      ? Math.max(2 * MIN_ELLIPSE_RADIUS_X, spanX)
+      : Math.max(MIN_RECT_WIDTH, spanX);
+  const depthOnGround =
+    tool === SceneObjectKind.Ellipse
+      ? Math.max(2 * MIN_ELLIPSE_RADIUS_Y, spanZ)
+      : Math.max(MIN_RECT_HEIGHT, spanZ);
 
   return {
     width,
@@ -83,7 +96,11 @@ export function computeDrawPreviewTransform(
   anchor: Vector3,
   current: Vector3,
 ): DrawPreviewTransform {
-  const { width, depthOnGround, centerX, centerZ } = groundSpan(anchor, current);
+  const { width, depthOnGround, centerX, centerZ } = groundSpan(
+    anchor,
+    current,
+    tool,
+  );
 
   if (tool === SceneObjectKind.Rectangle) {
     return {
