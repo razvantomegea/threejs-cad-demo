@@ -36,6 +36,7 @@ export default class Point extends Ellipsoid {
       size == null ||
       !("radius" in size) ||
       typeof size.radius !== "number" ||
+      !Number.isFinite(size.radius) ||
       size.radius <= 0
     ) {
       return;

@@ -34,7 +34,14 @@ export default abstract class Ellipsoid extends SceneObject {
   }: EllipsoidOptions) {
     super({ label });
     
-     if (size.radiusX <= 0 || size.radiusY <= 0 || size.radiusZ <= 0) {
+     if (
+       !Number.isFinite(size.radiusX) ||
+       !Number.isFinite(size.radiusY) ||
+       !Number.isFinite(size.radiusZ) ||
+       size.radiusX <= 0 ||
+       size.radiusY <= 0 ||
+       size.radiusZ <= 0
+     ) {
       throw new Error("Ellipsoid radii must be positive numbers");
     }
 
