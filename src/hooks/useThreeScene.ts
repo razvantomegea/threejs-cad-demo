@@ -1,27 +1,17 @@
 import { useEffect, type RefObject } from "react";
-import {
-  Scene,
-  PerspectiveCamera,
-  WebGLRenderer,
-  Color,
-  REVISION,
-} from "three";
+import { Scene, WebGLRenderer, Color, REVISION } from "three";
+import { useCamera, updateCameraProjection } from "./useCamera";
 
 export function useThreeScene(containerRef: RefObject<HTMLDivElement>): void {
+  const cameraRef = useCamera(containerRef);
+
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    const camera = cameraRef.current;
+    if (!container || !camera) return;
 
     const scene = new Scene();
     scene.background = new Color(0x101014);
-
-    const camera = new PerspectiveCamera(
-      60,
-      container.clientWidth / Math.max(container.clientHeight, 1),
-      0.1,
-      100
-    );
-    camera.position.z = 5;
 
     const renderer = new WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -31,19 +21,20 @@ export function useThreeScene(containerRef: RefObject<HTMLDivElement>): void {
     console.log("[boot] three.js works", { revision: REVISION });
 
     let frameId = 0;
-    const tick = (): void => {
+
+    const render = (): void => {
       renderer.render(scene, camera);
-      frameId = requestAnimationFrame(tick);
+      frameId = requestAnimationFrame(render);
     };
-    tick();
+
+    render();
 
     const handleResize = (): void => {
-      const w = container.clientWidth;
+      updateCameraProjection(camera, container);
       const h = Math.max(container.clientHeight, 1);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(container.clientWidth, h);
     };
+
     window.addEventListener("resize", handleResize);
 
     return () => {
@@ -52,5 +43,5 @@ export function useThreeScene(containerRef: RefObject<HTMLDivElement>): void {
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [containerRef]);
+  }, [containerRef, cameraRef]);
 }
