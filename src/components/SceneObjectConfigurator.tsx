@@ -61,6 +61,19 @@ function TransformFields({
     onUpdate({ transform: partial });
   };
 
+  const yRotationField = (
+    <NumberField
+      label="Y"
+      step={1}
+      value={rotation.y * RAD_TO_DEG}
+      onChange={(deg) =>
+        patchTransform({
+          rotation: { ...rotation, y: deg * DEG_TO_RAD },
+        })
+      }
+    />
+  );
+
   return (
     <fieldset className="scene-editor-fieldset">
       <legend className="scene-editor-legend">Position</legend>
@@ -86,16 +99,7 @@ function TransformFields({
       <legend className="scene-editor-legend">Rotation (°)</legend>
       <div className="scene-editor-field-row">
         {view2D ? (
-          <NumberField
-            label="Y"
-            step={1}
-            value={rotation.y * RAD_TO_DEG}
-            onChange={(deg) =>
-              patchTransform({
-                rotation: { ...rotation, y: deg * DEG_TO_RAD },
-              })
-            }
-          />
+          yRotationField
         ) : (
           <>
             <NumberField
@@ -108,16 +112,7 @@ function TransformFields({
                 })
               }
             />
-            <NumberField
-              label="Y"
-              step={1}
-              value={rotation.y * RAD_TO_DEG}
-              onChange={(deg) =>
-                patchTransform({
-                  rotation: { ...rotation, y: deg * DEG_TO_RAD },
-                })
-              }
-            />
+            {yRotationField}
             <NumberField
               label="Z"
               step={1}
