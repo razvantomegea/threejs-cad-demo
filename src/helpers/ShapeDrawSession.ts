@@ -1,13 +1,12 @@
 import { Vector3 } from "three";
-import { SCENE_GRID_PLANE_Y } from "../constants/sceneGrid";
 import {
-  FLAT_RECT_DEPTH,
   FLAT_SHAPE_ROTATION_X,
   MIN_ELLIPSE_RADIUS_X,
   MIN_ELLIPSE_RADIUS_Y,
   MIN_RECT_HEIGHT,
   MIN_RECT_WIDTH,
 } from "../constants/sceneDraw";
+import { flatShapePosition } from "../utils/flatShapeTransform";
 import { SceneObjectKind } from "../types/sceneObjects";
 import type { DrawTool } from "../types/sceneDraw";
 import type {
@@ -58,10 +57,6 @@ function groundSpan(
   };
 }
 
-function centerYOnPlane(): number {
-  return SCENE_GRID_PLANE_Y + FLAT_RECT_DEPTH / 2;
-}
-
 export function createDrawObjectConfig(
   tool: DrawTool,
   anchor: Vector3,
@@ -104,7 +99,7 @@ export function computeDrawPreviewTransform(
 
   if (tool === SceneObjectKind.Rectangle) {
     return {
-      position: { x: centerX, y: centerYOnPlane(), z: centerZ },
+      position: flatShapePosition(centerX, centerZ),
       scale: {
         x: width / MIN_RECT_WIDTH,
         y: depthOnGround / MIN_RECT_HEIGHT,
@@ -114,7 +109,7 @@ export function computeDrawPreviewTransform(
   }
 
   return {
-    position: { x: centerX, y: centerYOnPlane(), z: centerZ },
+    position: flatShapePosition(centerX, centerZ),
     scale: {
       x: width / 2 / MIN_ELLIPSE_RADIUS_X,
       y: depthOnGround / 2 / MIN_ELLIPSE_RADIUS_Y,

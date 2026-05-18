@@ -11,6 +11,7 @@ import Polygon from "./Polygon.ts";
 import Rectangle from "./Rectangle.ts";
 import type SceneObject from "./SceneObject.ts";
 import Sphere from "./Sphere.ts";
+import { normalizeFlatShapeConfig } from "../utils/flatShapeTransform.ts";
 
 const KIND_DISPLAY_NAMES: Record<SceneObjectKind, string> = {
   [SceneObjectKind.Cube]: "Cube",
@@ -35,28 +36,29 @@ function nextDefaultLabel(kind: SceneObjectKind): string {
 export default function createSceneObject(
   config: SceneObjectConfig,
 ): SceneObject {
-  const label = config.label ?? nextDefaultLabel(config.kind);
-  const { color, transform } = config;
+  const normalized = normalizeFlatShapeConfig(config);
+  const label = normalized.label ?? nextDefaultLabel(normalized.kind);
+  const { color, transform } = normalized;
 
-  switch (config.kind) {
+  switch (normalized.kind) {
     case SceneObjectKind.Cube:
-      return new Cube({ label, color, transform, size: config.size });
+      return new Cube({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Rectangle:
-      return new Rectangle({ label, color, transform, size: config.size });
+      return new Rectangle({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Line:
-      return new Line({ label, color, transform, size: config.size });
+      return new Line({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Sphere:
-      return new Sphere({ label, color, transform, size: config.size });
+      return new Sphere({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Circle:
-      return new Circle({ label, color, transform, size: config.size });
+      return new Circle({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Ellipse:
-      return new Ellipse({ label, color, transform, size: config.size });
+      return new Ellipse({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Point:
-      return new Point({ label, color, transform, size: config.size });
+      return new Point({ label, color, transform, size: normalized.size });
     case SceneObjectKind.Polygon:
-      return new Polygon({ label, color, transform, size: config.size });
+      return new Polygon({ label, color, transform, size: normalized.size });
     default: {
-      const _exhaustive: never = config;
+      const _exhaustive: never = normalized;
       return _exhaustive;
     }
   }

@@ -33,9 +33,11 @@ const TRANSFORM_MODES: readonly { mode: TransformMode; label: string }[] = [
 export default function Scene(): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const [controlsEnabled, setControlsEnabledState] = useState(true);
+  const [is2DViewEnabled, setIs2DViewEnabled] = useState(false);
 
   const {
     setControlsEnabled,
+    setIs2DView,
     editorSnapshot,
     addObject,
     updateObject,
@@ -48,6 +50,10 @@ export default function Scene(): JSX.Element {
   useEffect(() => {
     setControlsEnabled(controlsEnabled);
   }, [controlsEnabled, setControlsEnabled]);
+
+  useEffect(() => {
+    setIs2DView(is2DViewEnabled);
+  }, [is2DViewEnabled, setIs2DView]);
 
   const selectedSnapshot = useMemo(
     () =>
@@ -98,12 +104,24 @@ export default function Scene(): JSX.Element {
             <input
               type="checkbox"
               checked={controlsEnabled}
-              onChange={(event) => setControlsEnabledState(event.target.checked)}
+              onChange={(event) =>
+                setControlsEnabledState(event.target.checked)
+              }
             />
             Orbit controls
           </label>
+          <label className="scene-controls-label">
+            <input
+              type="checkbox"
+              checked={is2DViewEnabled}
+              onChange={(event) => setIs2DViewEnabled(event.target.checked)}
+            />
+            2D view
+          </label>
           <p className="scene-controls-hint">
-            Left drag: rotate · Right drag: pan · Wheel: zoom
+            {is2DViewEnabled
+              ? "Top-down XZ · orthographic · pan and zoom only"
+              : "Left drag: rotate · Right drag: pan · Wheel: zoom"}
           </p>
         </section>
 
@@ -227,6 +245,7 @@ export default function Scene(): JSX.Element {
           <SceneObjectConfigurator
             snapshot={selectedSnapshot}
             onUpdate={handleSelectedUpdate}
+            view2D={is2DViewEnabled}
           />
         ) : (
           <p className="scene-editor-empty scene-editor-empty-select">

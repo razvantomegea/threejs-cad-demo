@@ -38,7 +38,7 @@ export default class Ellipse extends Ellipsoid {
     const update = size as Partial<EllipseSize>;
     const radiusX = update.radiusX;
     const radiusY = update.radiusY;
-    
+
     if (radiusX === undefined && radiusY === undefined) {
       return;
     }

@@ -91,7 +91,9 @@ interface ResolvedGridOptions {
   readonly axisZColor: Color;
 }
 
-function resolveOptions(options: InfiniteGridOptions = {}): ResolvedGridOptions {
+function resolveOptions(
+  options: InfiniteGridOptions = {},
+): ResolvedGridOptions {
   return {
     cellSize: options.cellSize ?? DEFAULT_SCENE_GRID.cellSize,
     sectionSize: options.sectionSize ?? DEFAULT_SCENE_GRID.sectionSize,
@@ -99,21 +101,11 @@ function resolveOptions(options: InfiniteGridOptions = {}): ResolvedGridOptions 
     fadeDistance: options.fadeDistance ?? DEFAULT_SCENE_GRID.fadeDistance,
     yOffset: options.yOffset ?? DEFAULT_SCENE_GRID.yOffset,
     axisLength: options.axisLength ?? DEFAULT_SCENE_GRID.axisLength,
-    minorColor: new Color(
-      options.minorColor ?? DEFAULT_SCENE_GRID.minorColor,
-    ),
-    majorColor: new Color(
-      options.majorColor ?? DEFAULT_SCENE_GRID.majorColor,
-    ),
-    axisXColor: new Color(
-      options.axisXColor ?? DEFAULT_SCENE_GRID.axisXColor,
-    ),
-    axisYColor: new Color(
-      options.axisYColor ?? DEFAULT_SCENE_GRID.axisYColor,
-    ),
-    axisZColor: new Color(
-      options.axisZColor ?? DEFAULT_SCENE_GRID.axisZColor,
-    ),
+    minorColor: new Color(options.minorColor ?? DEFAULT_SCENE_GRID.minorColor),
+    majorColor: new Color(options.majorColor ?? DEFAULT_SCENE_GRID.majorColor),
+    axisXColor: new Color(options.axisXColor ?? DEFAULT_SCENE_GRID.axisXColor),
+    axisYColor: new Color(options.axisYColor ?? DEFAULT_SCENE_GRID.axisYColor),
+    axisZColor: new Color(options.axisZColor ?? DEFAULT_SCENE_GRID.axisZColor),
   };
 }
 

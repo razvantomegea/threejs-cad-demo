@@ -1,10 +1,4 @@
-import {
-  type Camera,
-  Raycaster,
-  type Scene,
-  Vector2,
-  Vector3,
-} from "three";
+import { type Camera, Raycaster, type Scene, Vector2, Vector3 } from "three";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { SCENE_GRID_PLANE_Y } from "../constants/sceneGrid";
 import createSceneObject from "../sceneObjects/createSceneObject.ts";
@@ -28,6 +22,26 @@ import {
   pickPointOnSceneGridPlane,
   pointerFromPointerEvent,
 } from "../utils/sceneGridIntersection.ts";
+import {
+  getFlatOnXzYaw,
+  isFlatOnXzKind,
+  setFlatOnXzYaw,
+} from "../utils/flatShapeTransform.ts";
+import {
+  captureRotationAxisLock,
+  FLAT_ON_XZ_ROTATION_LOCK,
+  rotationWithYAxisOnly,
+  type RotationAxisLock,
+} from "../utils/sceneRotationConstraint.ts";
+import {
+  capturePositionYLock,
+  captureScaleYLock,
+  FLAT_SHAPE_POSITION_Y_LOCK,
+  positionOnXZPlane,
+  scaleOnXZPlane,
+  type PositionYLock,
+  type ScaleYLock,
+} from "../utils/sceneView2DConstraint.ts";
 
 export type SceneObjectId = number;
 
@@ -44,7 +58,7 @@ const DEFAULT_TRANSFORM_MODE: TransformMode = "translate";
 
 export class SceneManager {
   private readonly scene: Scene;
-  private readonly camera: Camera;
+  private camera: Camera;
   private readonly domElement: HTMLElement;
   private readonly sceneControls: SceneControlsHandle;
   private readonly objects = new Map<SceneObjectId, SceneObject>();
@@ -60,10 +74,20 @@ export class SceneManager {
   private drawingObjectId: SceneObjectId | null = null;
   private drawingPointerId: number | null = null;
   private restoreOrbitControls: (() => void) | null = null;
+  private view2D = false;
+  private readonly rotationAxisLocks = new Map<SceneObjectId, RotationAxisLock>();
+  private readonly positionYLocks = new Map<SceneObjectId, PositionYLock>();
+  private readonly scaleYLocks = new Map<SceneObjectId, ScaleYLock>();
+  /** Grid-plane yaw for flat shapes; stable during translate/scale gizmo drags. */
+  private readonly flatYawLocks = new Map<SceneObjectId, number>();
   private disposed = false;
 
   private readonly handlePointerDown = (event: PointerEvent): void => {
-    if (this.disposed || event.button !== 0 || this.transformControls.dragging) {
+    if (
+      this.disposed ||
+      event.button !== 0 ||
+      this.transformControls.dragging
+    ) {
       return;
     }
 
@@ -146,6 +170,7 @@ export class SceneManager {
   };
 
   private readonly handleTransformObjectChange = (): void => {
+    this.constrainSelectedObjectForView2D();
     this.emitSnapshot();
   };
 
@@ -177,6 +202,7 @@ export class SceneManager {
       this.handleTransformObjectChange,
     );
 
+    this.applyTransformGizmoForView();
     domElement.addEventListener("pointerdown", this.handlePointerDown);
   }
 
@@ -193,6 +219,9 @@ export class SceneManager {
     const object = createSceneObject(config);
     this.objects.set(object.id, object);
     this.scene.add(object);
+    if (this.view2D) {
+      this.captureTransformLocksForObject(object);
+    }
     this.emitSnapshot();
     return object.id;
   }
@@ -203,7 +232,31 @@ export class SceneManager {
       return;
     }
 
-    object.applyUpdate(update);
+    object.applyUpdate(this.sanitizeUpdateForView2D(id, object, update));
+    if (this.view2D && isFlatOnXzKind(object.kind)) {
+      this.flatYawLocks.set(id, getFlatOnXzYaw(object));
+    }
+    this.emitSnapshot();
+  }
+
+  setView2D(enabled: boolean): void {
+    if (this.view2D === enabled) {
+      return;
+    }
+
+    this.view2D = enabled;
+
+    if (enabled) {
+      this.captureAllTransformLocks();
+      this.constrainSelectedObjectForView2D();
+    } else {
+      this.rotationAxisLocks.clear();
+      this.positionYLocks.clear();
+      this.scaleYLocks.clear();
+      this.flatYawLocks.clear();
+    }
+
+    this.applyTransformGizmoForView();
     this.emitSnapshot();
   }
 
@@ -260,12 +313,201 @@ export class SceneManager {
 
     this.transformMode = mode;
     this.transformControls.setMode(mode);
+    this.applyTransformGizmoForView();
     this.emitSnapshot();
+  }
+
+  setCamera(camera: Camera): void {
+    this.camera = camera;
+    this.transformControls.camera = camera;
+  }
+
+  private rotationLockForObject(object: SceneObject): RotationAxisLock {
+    if (isFlatOnXzKind(object.kind)) {
+      return FLAT_ON_XZ_ROTATION_LOCK;
+    }
+    return captureRotationAxisLock(object.rotation);
+  }
+
+  private positionYLockForObject(object: SceneObject): PositionYLock {
+    if (isFlatOnXzKind(object.kind)) {
+      return FLAT_SHAPE_POSITION_Y_LOCK;
+    }
+    return capturePositionYLock(object.position.y);
+  }
+
+  private scaleYLockForObject(object: SceneObject): ScaleYLock {
+    return captureScaleYLock(object.scale.y);
+  }
+
+  private captureTransformLocksForObject(object: SceneObject): void {
+    this.rotationAxisLocks.set(object.id, this.rotationLockForObject(object));
+    this.positionYLocks.set(object.id, this.positionYLockForObject(object));
+    this.scaleYLocks.set(object.id, this.scaleYLockForObject(object));
+    if (isFlatOnXzKind(object.kind)) {
+      this.flatYawLocks.set(object.id, getFlatOnXzYaw(object));
+    }
+  }
+
+  private captureAllTransformLocks(): void {
+    this.rotationAxisLocks.clear();
+    this.positionYLocks.clear();
+    this.scaleYLocks.clear();
+    this.flatYawLocks.clear();
+    for (const object of this.objects.values()) {
+      this.captureTransformLocksForObject(object);
+    }
+  }
+
+  private getRotationAxisLock(
+    id: SceneObjectId,
+    object: SceneObject,
+  ): RotationAxisLock {
+    const existing = this.rotationAxisLocks.get(id);
+    if (existing !== undefined) {
+      return existing;
+    }
+
+    const lock = this.rotationLockForObject(object);
+    this.rotationAxisLocks.set(id, lock);
+    return lock;
+  }
+
+  private getPositionYLock(id: SceneObjectId, object: SceneObject): PositionYLock {
+    const existing = this.positionYLocks.get(id);
+    if (existing !== undefined) {
+      return existing;
+    }
+
+    const lock = this.positionYLockForObject(object);
+    this.positionYLocks.set(id, lock);
+    return lock;
+  }
+
+  private getScaleYLock(id: SceneObjectId, object: SceneObject): ScaleYLock {
+    const existing = this.scaleYLocks.get(id);
+    if (existing !== undefined) {
+      return existing;
+    }
+
+    const lock = this.scaleYLockForObject(object);
+    this.scaleYLocks.set(id, lock);
+    return lock;
+  }
+
+  /**
+   * 2D view: translate/scale on XZ (grid plane); rotate only around world Y.
+   */
+  private applyTransformGizmoForView(): void {
+    const controls = this.transformControls;
+    controls.space = "world";
+
+    if (!this.view2D) {
+      controls.showX = true;
+      controls.showY = true;
+      controls.showZ = true;
+      return;
+    }
+
+    if (this.transformMode === "rotate") {
+      controls.showX = false;
+      controls.showY = true;
+      controls.showZ = false;
+      return;
+    }
+
+    controls.showX = true;
+    controls.showY = false;
+    controls.showZ = true;
+  }
+
+  private constrainSelectedObjectForView2D(): void {
+    if (!this.view2D || this.selectedId === null) {
+      return;
+    }
+
+    const object = this.objects.get(this.selectedId);
+    if (object === undefined) {
+      return;
+    }
+
+    const id = this.selectedId;
+
+    object.position.y = this.getPositionYLock(id, object).y;
+    object.scale.y = this.getScaleYLock(id, object).y;
+
+    if (this.transformMode === "rotate") {
+      if (isFlatOnXzKind(object.kind)) {
+        const yaw = getFlatOnXzYaw(object);
+        setFlatOnXzYaw(object, yaw);
+        this.flatYawLocks.set(id, yaw);
+      } else {
+        const rotationLock = this.getRotationAxisLock(id, object);
+        object.rotation.x = rotationLock.x;
+        object.rotation.z = rotationLock.z;
+      }
+      return;
+    }
+
+    if (isFlatOnXzKind(object.kind)) {
+      const yaw = this.flatYawLocks.get(id);
+      if (yaw !== undefined) {
+        setFlatOnXzYaw(object, yaw);
+      }
+    }
+  }
+
+  private sanitizeUpdateForView2D(
+    id: SceneObjectId,
+    object: SceneObject,
+    update: SceneObjectUpdate,
+  ): SceneObjectUpdate {
+    if (!this.view2D || update.transform === undefined) {
+      return update;
+    }
+
+    const { transform } = update;
+    let next = transform;
+
+    if (transform.position !== undefined) {
+      next = {
+        ...next,
+        position: positionOnXZPlane(
+          transform.position,
+          this.getPositionYLock(id, object),
+        ),
+      };
+    }
+
+    if (transform.scale !== undefined) {
+      next = {
+        ...next,
+        scale: scaleOnXZPlane(transform.scale, this.getScaleYLock(id, object)),
+      };
+    }
+
+    if (transform.rotation !== undefined) {
+      next = {
+        ...next,
+        rotation: rotationWithYAxisOnly(
+          transform.rotation,
+          this.getRotationAxisLock(id, object),
+        ),
+      };
+    }
+
+    if (next === transform) {
+      return update;
+    }
+
+    return { ...update, transform: next };
   }
 
   getSnapshot(): SceneEditorSnapshot {
     return {
-      objects: Array.from(this.objects.values(), (object) => object.toSnapshot()),
+      objects: Array.from(this.objects.values(), (object) =>
+        object.toSnapshot(),
+      ),
       selectedId: this.selectedId,
       transformMode: this.transformMode,
       activeDrawTool: this.activeDrawTool,
@@ -368,7 +610,11 @@ export class SceneManager {
     const object = this.objects.get(id);
     if (object !== undefined) {
       const transform = object.getTransform();
-      const baked = bakeDrawFromScale(tool, transform.scale, transform.position);
+      const baked = bakeDrawFromScale(
+        tool,
+        transform.scale,
+        transform.position,
+      );
       object.applyUpdate(toBakeUpdate(baked));
     }
 

@@ -13,6 +13,12 @@ import {
   type SceneObjectInit,
   type SceneObjectUserData,
 } from "../types/sceneObjectRuntime.ts";
+import {
+  flatOnXzEulerFromYaw,
+  getFlatOnXzYaw,
+  isFlatOnXzKind,
+  setFlatOnXzYaw,
+} from "../utils/flatShapeTransform.ts";
 
 export { SCENE_OBJECT_ID_USER_DATA_KEY } from "../types/sceneObjectRuntime.ts";
 export type {
@@ -59,7 +65,9 @@ export default abstract class SceneObject extends Object3D {
   getTransform(): SceneObjectTransform {
     return {
       position: this.toVector3State(this.position),
-      rotation: this.toEulerState(this.rotation),
+      rotation: isFlatOnXzKind(this.kind)
+        ? flatOnXzEulerFromYaw(getFlatOnXzYaw(this))
+        : this.toEulerState(this.rotation),
       scale: this.toVector3State(this.scale),
     };
   }
@@ -70,7 +78,11 @@ export default abstract class SceneObject extends Object3D {
     }
 
     if (input.rotation !== undefined) {
-      this.rotation.set(input.rotation.x, input.rotation.y, input.rotation.z);
+      if (isFlatOnXzKind(this.kind)) {
+        setFlatOnXzYaw(this, input.rotation.y);
+      } else {
+        this.rotation.set(input.rotation.x, input.rotation.y, input.rotation.z);
+      }
     }
 
     if (input.scale !== undefined) {

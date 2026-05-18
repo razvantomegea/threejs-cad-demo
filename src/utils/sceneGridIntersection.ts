@@ -1,10 +1,4 @@
-import {
-  type Camera,
-  Plane,
-  Raycaster,
-  Vector2,
-  Vector3,
-} from "three";
+import { type Camera, Plane, Raycaster, Vector2, Vector3 } from "three";
 
 const GRID_PLANE_NORMAL = new Vector3(0, 1, 0);
 const INTERSECTION_TARGET = new Vector3();

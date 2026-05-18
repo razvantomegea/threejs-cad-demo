@@ -38,11 +38,11 @@ isProject: false
 
 ## Target behavior
 
-| Kind | Fill | Outline | UI |
-|------|------|---------|-----|
-| Rectangle, Circle, Ellipse | colored mesh, opacity 0–1 | `LineLoop`, opacity 0–1 | fill + outline controls |
-| Polygon | new `ShapeGeometry` fill (optional transparent) | existing segment meshes | fill + outline controls |
-| Cube, Sphere, Line, Point | — | — | existing single Color |
+| Kind                       | Fill                                            | Outline                 | UI                      |
+| -------------------------- | ----------------------------------------------- | ----------------------- | ----------------------- |
+| Rectangle, Circle, Ellipse | colored mesh, opacity 0–1                       | `LineLoop`, opacity 0–1 | fill + outline controls |
+| Polygon                    | new `ShapeGeometry` fill (optional transparent) | existing segment meshes | fill + outline controls |
+| Cube, Sphere, Line, Point  | —                                               | —                       | existing single Color   |
 
 **Outline-only look**: `fill.opacity = 0` (fill mesh hidden or fully transparent), `outline.opacity > 0`.
 
@@ -74,7 +74,7 @@ flowchart LR
 
 ```ts
 export interface ColorAlpha {
-  readonly color: number;   // 0xRRGGBB
+  readonly color: number; // 0xRRGGBB
   readonly opacity: number; // 0..1
 }
 
@@ -124,12 +124,12 @@ export function applyColorAlpha(
 
 **New file** [`src/utils/flatShapeOutline.ts`](src/utils/flatShapeOutline.ts) — pure geometry builders (local space, Z = 0 plane unless noted):
 
-| Shape | Outline geometry |
-|-------|------------------|
-| Rectangle | 4-corner `BufferGeometry` + `LineLoop` |
-| Circle | `EllipseCurve(0,0, radius, radius)` → points → `LineLoop` |
-| Ellipse | same with `radiusX`, `radiusY` |
-| Polygon | reuse vertex loop (closed) → `LineLoop` (segments can stay for hit area or be replaced later; **keep segment meshes for raycast/picking**, add `LineLoop` as visual outline OR drop duplicate by making segments use outline appearance only — prefer **one visual**: `LineLoop` for outline, keep thin segments only if needed for picking; simplest v1: **style existing segment meshes with outline appearance** and add separate `LineLoop` only for rect/circle/ellipse) |
+| Shape     | Outline geometry                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rectangle | 4-corner `BufferGeometry` + `LineLoop`                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Circle    | `EllipseCurve(0,0, radius, radius)` → points → `LineLoop`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Ellipse   | same with `radiusX`, `radiusY`                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Polygon   | reuse vertex loop (closed) → `LineLoop` (segments can stay for hit area or be replaced later; **keep segment meshes for raycast/picking**, add `LineLoop` as visual outline OR drop duplicate by making segments use outline appearance only — prefer **one visual**: `LineLoop` for outline, keep thin segments only if needed for picking; simplest v1: **style existing segment meshes with outline appearance** and add separate `LineLoop` only for rect/circle/ellipse) |
 
 For Polygon v1: **do not duplicate** — apply `outline` to segment materials; add **fill mesh** only.
 
@@ -185,14 +185,14 @@ Minor CSS in [`global.css`](c:/Projects/three-test/src/styles/global.css) only i
 
 ## Files touched (parallel-friendly)
 
-| Agent | Files |
-|-------|--------|
-| A | `appearance.ts`, `config.ts`, `update.ts`, `snapshot.ts`, `index.ts`, `flatShapeAppearance.ts` |
-| B | `flatShapeMaterials.ts`, `flatShapeOutline.ts`, `FlatFilledShape.ts` |
-| C | `Rectangle.ts`, `Circle.ts`, `Ellipse.ts` |
-| D | `Polygon.ts` |
-| E | `SceneObjectConfigurator.tsx`, optional `global.css` |
-| F | `createSceneObject.ts`, `SceneObject.ts` (minimal) |
+| Agent | Files                                                                                          |
+| ----- | ---------------------------------------------------------------------------------------------- |
+| A     | `appearance.ts`, `config.ts`, `update.ts`, `snapshot.ts`, `index.ts`, `flatShapeAppearance.ts` |
+| B     | `flatShapeMaterials.ts`, `flatShapeOutline.ts`, `FlatFilledShape.ts`                           |
+| C     | `Rectangle.ts`, `Circle.ts`, `Ellipse.ts`                                                      |
+| D     | `Polygon.ts`                                                                                   |
+| E     | `SceneObjectConfigurator.tsx`, optional `global.css`                                           |
+| F     | `createSceneObject.ts`, `SceneObject.ts` (minimal)                                             |
 
 ## Verification (manual)
 

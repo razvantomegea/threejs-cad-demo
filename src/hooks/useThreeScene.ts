@@ -1,13 +1,30 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { Scene, WebGLRenderer, Color, REVISION } from "three";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
+import {
+  Scene,
+  WebGLRenderer,
+  Color,
+  REVISION,
+  type Camera,
+  type OrthographicCamera,
+  type PerspectiveCamera,
+} from "three";
 import {
   createCamera,
   updateCameraProjection,
   resolveCameraSettings,
-  type CameraProjection,
   type CameraSettings,
   type CameraSettingsInput,
 } from "../helpers/camera";
+import {
+  orientCameraPerspective3D,
+  orientCameraTopDownXZ,
+} from "../helpers/viewMode";
 import { InfiniteGridHelper } from "../helpers/InfiniteGridHelper";
 import { SceneManager, type SceneObjectId } from "../helpers/SceneManager";
 import { createSceneControls } from "../helpers/sceneControls";
@@ -32,7 +49,6 @@ const EMPTY_EDITOR_SNAPSHOT: SceneEditorSnapshot = {
 };
 
 export interface UseThreeSceneOptions extends CameraSettingsInput {
-  cameraProjection?: CameraProjection;
   /** Initial enabled state; default true */
   controlsEnabled?: boolean;
   /** Hex (e.g. `0xc0c0c0`) or CSS color (e.g. `"#c0c0c0"`). Default `0xc0c0c0`. */
@@ -41,6 +57,8 @@ export interface UseThreeSceneOptions extends CameraSettingsInput {
 
 export interface UseThreeSceneResult {
   setControlsEnabled: (enabled: boolean) => void;
+  is2DView: boolean;
+  setIs2DView: (enabled: boolean) => void;
   editorSnapshot: SceneEditorSnapshot;
   addObject: (config: SceneObjectConfig) => SceneObjectId;
   updateObject: (id: SceneObjectId, update: SceneObjectUpdate) => void;
@@ -55,14 +73,12 @@ export function useThreeScene(
   options: UseThreeSceneOptions = {},
 ): UseThreeSceneResult {
   const {
-    cameraProjection = "perspective",
     controlsEnabled: initialControlsEnabled = true,
     backgroundColor = DEFAULT_BACKGROUND_COLOR,
     ...cameraSettingsInput
   } = options;
 
   const initRef = useRef<{
-    projection: CameraProjection;
     controlsEnabled: boolean;
     cameraSettings: CameraSettings;
     backgroundColor: number | string;
@@ -70,7 +86,6 @@ export function useThreeScene(
 
   if (initRef.current === null) {
     initRef.current = {
-      projection: cameraProjection,
       controlsEnabled: initialControlsEnabled,
       cameraSettings: resolveCameraSettings(cameraSettingsInput),
       backgroundColor,
@@ -79,8 +94,11 @@ export function useThreeScene(
 
   const controlsHandleRef = useRef<SceneControlsHandle | null>(null);
   const managerRef = useRef<SceneManager | null>(null);
-  const [editorSnapshot, setEditorSnapshot] =
-    useState<SceneEditorSnapshot>(EMPTY_EDITOR_SNAPSHOT);
+  const applyViewModeRef = useRef<(is2D: boolean) => void>(() => {});
+  const [is2DView, setIs2DViewState] = useState(false);
+  const [editorSnapshot, setEditorSnapshot] = useState<SceneEditorSnapshot>(
+    EMPTY_EDITOR_SNAPSHOT,
+  );
 
   const setControlsEnabled = useCallback((enabled: boolean): void => {
     controlsHandleRef.current?.setEnabled(enabled);
@@ -117,11 +135,16 @@ export function useThreeScene(
     managerRef.current?.setDrawTool(tool);
   }, []);
 
+  const setIs2DView = useCallback((enabled: boolean): void => {
+    setIs2DViewState(enabled);
+    applyViewModeRef.current(enabled);
+  }, []);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const { projection, controlsEnabled, cameraSettings, backgroundColor } =
+    const { controlsEnabled, cameraSettings, backgroundColor } =
       initRef.current!;
 
     const scene = new Scene();
@@ -135,20 +158,63 @@ export function useThreeScene(
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
 
-    const camera = createCamera(container, projection, cameraSettings);
-    const controls = createSceneControls(camera, renderer.domElement, {
+    const perspectiveCamera = createCamera(
+      container,
+      "perspective",
+      cameraSettings,
+    ) as PerspectiveCamera;
+    const orthographicCamera = createCamera(
+      container,
+      "orthographic",
+      cameraSettings,
+    ) as OrthographicCamera;
+    let activeCamera: Camera = perspectiveCamera;
+
+    const controls = createSceneControls(activeCamera, renderer.domElement, {
       enabled: controlsEnabled,
     });
     controlsHandleRef.current = controls;
 
     const manager = new SceneManager({
       scene,
-      camera,
+      camera: activeCamera,
       domElement: renderer.domElement,
       sceneControls: controls,
     });
     managerRef.current = manager;
     const unsubscribe = manager.subscribe(setEditorSnapshot);
+
+    const applyViewMode = (is2D: boolean): void => {
+      const nextCamera = is2D ? orthographicCamera : perspectiveCamera;
+      if (activeCamera !== nextCamera) {
+        activeCamera = nextCamera;
+        controls.setCamera(activeCamera);
+        manager.setCamera(activeCamera);
+      }
+
+      controls.resetTarget();
+
+      if (is2D) {
+        orientCameraTopDownXZ(activeCamera, cameraSettings.positionZ);
+        controls.setRotateEnabled(false);
+      } else {
+        orientCameraPerspective3D(
+          activeCamera as PerspectiveCamera,
+          cameraSettings,
+        );
+        controls.setRotateEnabled(true);
+      }
+
+      updateCameraProjection(
+        activeCamera as PerspectiveCamera | OrthographicCamera,
+        container,
+        cameraSettings,
+      );
+
+      manager.setView2D(is2D);
+    };
+
+    applyViewModeRef.current = applyViewMode;
 
     console.log("[boot] three.js works", { revision: REVISION });
 
@@ -156,13 +222,17 @@ export function useThreeScene(
 
     const render = (): void => {
       controls.update();
-      grid.update(camera);
-      renderer.render(scene, camera);
+      grid.update(activeCamera);
+      renderer.render(scene, activeCamera);
       frameId = requestAnimationFrame(render);
     };
 
     const handleResize = (): void => {
-      updateCameraProjection(camera, container, cameraSettings);
+      updateCameraProjection(
+        activeCamera as PerspectiveCamera | OrthographicCamera,
+        container,
+        cameraSettings,
+      );
       const h = Math.max(container.clientHeight, 1);
       renderer.setSize(container.clientWidth, h);
     };
@@ -176,11 +246,13 @@ export function useThreeScene(
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       unsubscribe();
+      applyViewModeRef.current = () => {};
       grid.dispose();
       scene.remove(grid);
       manager.dispose();
       managerRef.current = null;
       setEditorSnapshot(EMPTY_EDITOR_SNAPSHOT);
+      setIs2DViewState(false);
       controls.dispose();
       controlsHandleRef.current = null;
       renderer.dispose();
@@ -190,6 +262,8 @@ export function useThreeScene(
 
   return {
     setControlsEnabled,
+    is2DView,
+    setIs2DView,
     editorSnapshot,
     addObject,
     updateObject,
